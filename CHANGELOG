@@ -1,3 +1,51 @@
+
+Version 1.5.0 (2020-09-01)
+--------------------------
+Crash connected with method writeSessionToFile in SPSession (#515)
+Emitter refactoring (#540)
+Report logs to the app (#534)
+Add diagnostic feature (#533)
+
+Version 1.4.1 (2020-07-22)
+--------------------------
+TrueTimestamp has to be set in seconds. (#532)
+ScreenView event doesn't track transitionType (#516) 
+
+Version 1.4.0 (2020-07-10)
+--------------------------
+Validate EventData in Unstructured events (#526)
+Fix url percent escaping (#525)
+Fix contexts duplication (#524)
+Add method for setting true timestamp (#276)
+Renew event ID when event object is reused (#521)
+Move from Travis CI to GitHub Actions (#517)
+Add unified track method for all the events (#518)
+
+Version 1.3.1 (2020-05-07)
+--------------------------
+Remove SPM demo app as it causes issues to Carthage (#513)
+Specifcy FMDB version instead of commit in Package.swift (#512) (Contribution of @BennetLinden)
+Adds public access to a tracker's current session id (#508) (Contribution of @ejensen)
+Add missing references to SPConsentDocument.h (#507) (Contribution of @ejensen)
+
+Version 1.3.0 (2020-04-21)
+--------------------------
+Swift Package Manager unable to find headers on subfolders (#503) (Contribution of @vauxhall)
+Replace deprecated CTTelephonyNetworkInfo methods (#479)
+Fix deprecated CFURLCreateStringByAddingPercentEscapes (#493)
+Fix deprecated keyWindow (#492)
+Update Technical Docs link (#443)
+Update copyright (#499)
+Add GDPR context (#425)
+Add support for global contexts (#357)
+Add Swift Package Manager support (#474) (Contribution of @vauxhall)
+Events processing refactoring (#489)
+
+Version 1.2.2 (2020-03-04)
+--------------------------
+Fix failing test about ScreenContext (#486)
+FMDB versions conflicts with other dependency (#432)
+
 Version 1.2.1 (2020-02-12)
 --------------------------
 Fix screen context not correctly updated on screenView events (#483)

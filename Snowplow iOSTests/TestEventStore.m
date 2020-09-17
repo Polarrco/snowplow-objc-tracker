@@ -2,7 +2,7 @@
 //  TestEventStore.m
 //  Snowplow
 //
-//  Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,35 +16,26 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Jonathan Almeida
-//  Copyright: Copyright (c) 2013-2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2013-2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
 #import <XCTest/XCTest.h>
-#import "SPEventStore.h"
+#import "SPSQLiteEventStore.h"
 #import "SPPayload.h"
 
 @interface TestEventStore : XCTestCase
-
 @end
 
 @implementation TestEventStore
 
-- (void)setUp {
-    [super setUp];
-}
-
-- (void)tearDown {
-    [super tearDown];
-}
-
 - (void)testInit {
-    SPEventStore * eventStore = [[SPEventStore alloc] init];
+    SPSQLiteEventStore * eventStore = [[SPSQLiteEventStore alloc] init];
     XCTAssertNotNil(eventStore);
 }
 
 - (void)testInsertPayload {
-    SPEventStore * eventStore = [[SPEventStore alloc] init];
+    SPSQLiteEventStore * eventStore = [[SPSQLiteEventStore alloc] init];
     [eventStore removeAllEvents];
     
     // Build an event
@@ -58,7 +49,7 @@
     [eventStore insertEvent:payload];
     
     XCTAssertEqual([eventStore count], 1);
-    XCTAssertEqualObjects([eventStore getEventWithId:1], [payload getAsDictionary]);
+    XCTAssertEqualObjects([[eventStore getEventWithId:1].payload getAsDictionary], [payload getAsDictionary]);
     XCTAssertEqual([eventStore getLastInsertedRowId], 1);
     [eventStore removeEventWithId:1];
     
@@ -66,7 +57,7 @@
 }
 
 - (void)testInsertManyPayloads {
-    SPEventStore * eventStore = [[SPEventStore alloc] init];
+    SPSQLiteEventStore * eventStore = [[SPSQLiteEventStore alloc] init];
     [eventStore removeAllEvents];
     
     // Build an event
@@ -84,6 +75,9 @@
     XCTAssertEqual([eventStore getAllEventsLimited:600].count, 250);
     XCTAssertEqual([eventStore getAllEventsLimited:150].count, 150);
     XCTAssertEqual([eventStore getAllEvents].count, 250);
+    
+    [eventStore removeAllEvents];
+    XCTAssertEqual([eventStore count], 0);
 }
 
 @end

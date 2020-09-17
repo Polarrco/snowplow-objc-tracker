@@ -1,8 +1,8 @@
 //
-//  TestRequestResponse.m
+//  TestRequestResult.m
 //  Snowplow
 //
-//  Copyright (c) 2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,19 +16,19 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Joshua Beemster
-//  Copyright: Copyright (c) 2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
 #import <XCTest/XCTest.h>
 #import "Snowplow.h"
-#import "SPRequestResponse.h"
+#import "SPRequestResult.h"
 
-@interface TestRequestResponse : XCTestCase
+@interface TestRequestResult : XCTestCase
 
 @end
 
-@implementation TestRequestResponse
+@implementation TestRequestResult
 
 - (void)setUp {
     [super setUp];
@@ -39,19 +39,19 @@
 }
 
 - (void)testInit {
-    NSMutableArray * array = [[NSMutableArray alloc] init];
-    [array addObject:[NSNumber numberWithInteger:1]];
-    SPRequestResponse * response = [[SPRequestResponse alloc] initWithBool:YES withIndex:array];
+    NSMutableArray<NSNumber *> *emitterEventIds = [NSMutableArray new];
+    [emitterEventIds addObject:@1];
+    SPRequestResult *result = [[SPRequestResult alloc] initWithSuccess:YES storeIds:emitterEventIds];
     
-    XCTAssertNotNil(response);
-    XCTAssertEqual([response getSuccess], YES);
-    XCTAssertEqual([response getIndexArray], array);
+    XCTAssertNotNil(result);
+    XCTAssertEqual(result.isSuccessful, YES);
+    XCTAssertEqual(result.storeIds, emitterEventIds);
     
-    response = [[SPRequestResponse alloc] init];
+    result = [[SPRequestResult alloc] init];
     
-    XCTAssertNotNil(response);
-    XCTAssertEqual([response getSuccess], NO);
-    XCTAssertNil([response getIndexArray]);
+    XCTAssertNotNil(result);
+    XCTAssertEqual(result.isSuccessful, NO);
+    XCTAssertNil(result.storeIds);
 }
 
 @end

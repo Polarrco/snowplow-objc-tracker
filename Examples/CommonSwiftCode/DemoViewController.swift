@@ -2,8 +2,22 @@
 //  ViewController.swift
 //  SnowplowSwiftDemo
 //
-//  Created by Michael Hadam on 1/17/18.
-//  Copyright © 2018 snowplowanalytics. All rights reserved.
+//  Copyright (c) 2015-2020 Snowplow Analytics Ltd. All rights reserved.
+//
+//  This program is licensed to you under the Apache License Version 2.0,
+//  and you may not use this file except in compliance with the Apache License
+//  Version 2.0. You may obtain a copy of the Apache License Version 2.0 at
+//  http://www.apache.org/licenses/LICENSE-2.0.
+//
+//  Unless required by applicable law or agreed to in writing,
+//  software distributed under the Apache License Version 2.0 is distributed on
+//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+//  express or implied. See the Apache License Version 2.0 for the specific
+//  language governing permissions and limitations there under.
+//
+//  Authors: Michael Hadam
+//  Copyright: Copyright (c) 2015-2020 Snowplow Analytics Ltd
+//  License: Apache License Version 2.0
 //
 
 import UIKit
@@ -17,6 +31,8 @@ protocol PageObserver: class {
 }
 
 class DemoViewController: UIViewController, UITextFieldDelegate, PageObserver {
+    private let keyUriField = "URL-Endpoint";
+
     @IBOutlet weak var uriField: UITextField!
     @IBOutlet weak var trackingSwitch: UISegmentedControl!
     @IBOutlet weak var protocolSwitch: UISegmentedControl!
@@ -50,6 +66,7 @@ class DemoViewController: UIViewController, UITextFieldDelegate, PageObserver {
         self.uriField.delegate = self
         self.trackingSwitch.addTarget(self, action: #selector(action), for: .valueChanged)
         // Do any additional setup after loading the view, typically from a nib.
+        uriField.text = UserDefaults.standard.string(forKey: keyUriField) ?? ""
     }
 
     override func didReceiveMemoryWarning() {
@@ -72,6 +89,7 @@ class DemoViewController: UIViewController, UITextFieldDelegate, PageObserver {
     }
     
     @IBAction func trackEvents(_ sender: UIButton) {
+        UserDefaults.standard.set(uriField.text ?? "", forKey: keyUriField);
         DispatchQueue.global(qos: .default).async {
             let url = self.parentPageViewController.getCollectorUrl()
             if url == "" {
@@ -84,7 +102,7 @@ class DemoViewController: UIViewController, UITextFieldDelegate, PageObserver {
             self.tracker?.emitter.setProtocol(self.parentPageViewController.getProtocolType())
             
             // Iterate the made counter
-            self.parentPageViewController.madeCounter += 28;
+            self.parentPageViewController.madeCounter += 14;
             
             // Track all types of events
             DemoUtils.trackAll(self.parentPageViewController.tracker)

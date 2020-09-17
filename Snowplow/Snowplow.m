@@ -2,7 +2,7 @@
 //  Snowplow.m
 //  Snowplow
 //
-//  Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Joshua Beemster
-//  Copyright: Copyright (c) 2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
@@ -27,13 +27,13 @@
 // --- Version
 
 #if SNOWPLOW_TARGET_IOS
-NSString * const kSPVersion               = @"ios-1.2.1";
+NSString * const kSPVersion               = @"ios-1.5.0";
 #elif SNOWPLOW_TARGET_TV
-NSString * const kSPVersion               = @"tvos-1.2.1";
+NSString * const kSPVersion               = @"tvos-1.5.0";
 #elif SNOWPLOW_TARGET_WATCHOS
-NSString * const kSPVersion               = @"watchos-1.2.1";
+NSString * const kSPVersion               = @"watchos-1.5.0";
 #else
-NSString * const kSPVersion               = @"osx-1.2.1";
+NSString * const kSPVersion               = @"osx-1.5.0";
 #endif
 
 // --- Emitter
@@ -49,7 +49,7 @@ NSString * const kSPEndpointGet           = @"/i";
 NSString * const kSPIglu                  = @"iglu";
 NSString * const kSPSnowplowVendor        = @"com.snowplowanalytics.snowplow";
 NSString * const kSPSchemaTag             = @"jsonschema";
-NSString * const kSPPayloadDataSchema     = @"iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-3";
+NSString * const kSPPayloadDataSchema     = @"iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4";
 NSString * const kSPUserTimingsSchema     = @"iglu:com.snowplowanalytics.snowplow/timing/jsonschema/1-0-0";
 NSString * const kSPScreenViewSchema      = @"iglu:com.snowplowanalytics.mobile/screen_view/jsonschema/1-0-0";
 NSString * const kSPUnstructSchema        = @"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0";
@@ -68,6 +68,8 @@ NSString * const kSPForegroundSchema = @"iglu:com.snowplowanalytics.snowplow/app
 NSString * const kSPBackgroundSchema = @"iglu:com.snowplowanalytics.snowplow/application_background/jsonschema/1-0-0";
 NSString * const kSPErrorSchema = @"iglu:com.snowplowanalytics.snowplow/application_error/jsonschema/1-0-2";
 NSString * const kSPApplicationInstallSchema = @"iglu:com.snowplowanalytics.mobile/application_install/jsonschema/1-0-0";
+NSString * const kSPGdprContextSchema     = @"iglu:com.snowplowanalytics.snowplow/gdpr/jsonschema/1-0-0";
+NSString * const kSPDiagnosticErrorSchema = @"iglu:com.snowplowanalytics.snowplow/diagnostic_error/jsonschema/1-0-0";
 
 // --- Event Keys
 
@@ -84,6 +86,7 @@ NSString * const kSPData                  = @"data";
 NSString * const kSPEvent                 = @"e";
 NSString * const kSPEid                   = @"eid";
 NSString * const kSPTimestamp             = @"dtm";
+NSString * const kSPTrueTimestamp         = @"ttm";
 NSString * const kSPSentTimestamp         = @"stm";
 NSString * const kSPTrackerVersion        = @"tv";
 NSString * const kSPAppId                 = @"aid";
@@ -270,5 +273,19 @@ NSString * const kSPInstalledBefore        = @"SPInstalledBefore";
 NSString * const kSPInstallTimestamp       = @"SPInstallTimestamp";
 NSString * const kSPPreviousInstallVersion = @"SPInstallVersion";
 NSString * const kSPPreviousInstallBuild   = @"SPInstallBuild";
+
+// --- GDPR Context
+
+NSString * const kSPBasisForProcessing  = @"basisForProcessing";
+NSString * const kSPDocumentId          = @"documentId";
+NSString * const kSPDocumentVersion     = @"documentVersion";
+NSString * const kSPDocumentDescription = @"documentDescription";
+
+// --- Tracker Diagnostic
+
+NSString * const kSPDiagnosticErrorMessage       = @"message";
+NSString * const kSPDiagnosticErrorStack         = @"stackTrace";
+NSString * const kSPDiagnosticErrorClassName     = @"className";
+NSString * const kSPDiagnosticErrorExceptionName = @"exceptionName";
 
 @end

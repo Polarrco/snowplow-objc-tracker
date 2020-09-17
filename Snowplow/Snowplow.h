@@ -2,7 +2,7 @@
 //  Snowplow.h
 //  Snowplow
 //
-//  Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Jonathan Almeida, Joshua Beemster
-//  Copyright: Copyright (c) 2013-2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2013-2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
@@ -37,14 +37,6 @@
 #define SNOWPLOW_iOS_8_OR_LATER ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
 #define SNOWPLOW_iOS_9_OR_LATER ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9.0)
 #endif
-
-// Macros for Logging
-#ifdef SNOWPLOW_DEBUG
-#   define SnowplowDLog(...) NSLog(__VA_ARGS__)
-#else
-#   define SnowplowDLog(...)
-#endif
-#define ALog(...) NSLog(__VA_ARGS__)
 
 @interface Snowplow : NSObject
 
@@ -75,8 +67,6 @@ extern NSString * const kSPDesktopContextSchema;
 extern NSString * const kSPSessionContextSchema;
 extern NSString * const kSPScreenContextSchema;
 extern NSString * const kSPGeoContextSchema;
-extern NSString * const kSPConsentDocumentSchema;
-extern NSString * const kSPConsentGrantedSchema;
 extern NSString * const kSPConsentWithdrawnSchema;
 extern NSString * const kSPConsentDocumentSchema;
 extern NSString * const kSPConsentGrantedSchema;
@@ -86,6 +76,8 @@ extern NSString * const kSPBackgroundSchema;
 extern NSString * const kSPForegroundSchema;
 extern NSString * const kSPErrorSchema;
 extern NSString * const kSPApplicationInstallSchema;
+extern NSString * const kSPGdprContextSchema;
+extern NSString * const kSPDiagnosticErrorSchema;
 
 // --- Event Keys
 
@@ -102,6 +94,7 @@ extern NSString * const kSPData;
 extern NSString * const kSPEvent;
 extern NSString * const kSPEid;
 extern NSString * const kSPTimestamp;
+extern NSString * const kSPTrueTimestamp;
 extern NSString * const kSPSentTimestamp;
 extern NSString * const kSPTrackerVersion;
 extern NSString * const kSPAppId;
@@ -284,5 +277,19 @@ extern NSString * const kSPInstalledBefore;
 extern NSString * const kSPInstallTimestamp;
 extern NSString * const kSPPreviousInstallVersion;
 extern NSString * const kSPPreviousInstallBuild;
+
+// --- GDPR Context
+
+extern NSString * const kSPBasisForProcessing;
+extern NSString * const kSPDocumentId;
+extern NSString * const kSPDocumentVersion;
+extern NSString * const kSPDocumentDescription;
+
+// --- Tracker Diagnostic
+
+extern NSString * const kSPDiagnosticErrorMessage;
+extern NSString * const kSPDiagnosticErrorStack;
+extern NSString * const kSPDiagnosticErrorClassName;
+extern NSString * const kSPDiagnosticErrorExceptionName;
 
 @end

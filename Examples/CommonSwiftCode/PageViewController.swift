@@ -2,8 +2,22 @@
 //  PageViewController.swift
 //  SnowplowSwiftDemo
 //
-//  Created by Michael Hadam on 3/4/19.
-//  Copyright © 2019 snowplowanalytics. All rights reserved.
+//  Copyright (c) 2015-2020 Snowplow Analytics Ltd. All rights reserved.
+//
+//  This program is licensed to you under the Apache License Version 2.0,
+//  and you may not use this file except in compliance with the Apache License
+//  Version 2.0. You may obtain a copy of the Apache License Version 2.0 at
+//  http://www.apache.org/licenses/LICENSE-2.0.
+//
+//  Unless required by applicable law or agreed to in writing,
+//  software distributed under the Apache License Version 2.0 is distributed on
+//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+//  express or implied. See the Apache License Version 2.0 for the specific
+//  language governing permissions and limitations there under.
+//
+//  Authors: Michael Hadam
+//  Copyright: Copyright (c) 2015-2020 Snowplow Analytics Ltd
+//  License: Apache License Version 2.0
 //
 
 import UIKit
@@ -26,13 +40,18 @@ class PageViewController:  UIPageViewController, UIPageViewControllerDelegate, U
     // Tracker setup and init
 
     func getTracker(_ url: String, method: SPRequestOptions) -> SPTracker {
+        let eventStore = SPSQLiteEventStore();
+        let network = SPDefaultNetworkConnection.build { (builder) in
+            builder.setUrlEndpoint(url)
+            builder.setHttpMethod(method)
+            builder.setEmitThreadPoolSize(20)
+            builder.setByteLimitPost(52000)
+        }
         let emitter = SPEmitter.build({ (builder : SPEmitterBuilder?) -> Void in
-            builder!.setUrlEndpoint(url)
-            builder!.setHttpMethod(method)
             builder!.setCallback(self)
             builder!.setEmitRange(500)
-            builder!.setEmitThreadPoolSize(20)
-            builder!.setByteLimitPost(52000)
+            builder!.setEventStore(eventStore)
+            builder!.setNetworkConnection(network)
         })
         let subject = SPSubject(platformContext: true, andGeoContext: false)
         let newTracker = SPTracker.build({ (builder : SPTrackerBuilder?) -> Void in
@@ -48,8 +67,35 @@ class PageViewController:  UIPageViewController, UIPageViewControllerDelegate, U
             builder!.setApplicationContext(true)
             builder!.setExceptionEvents(true)
             builder!.setInstallEvent(true)
+            // set global context generators
+            builder!.setGlobalContextGenerators([
+                "ruleSetExampleTag": self.ruleSetGlobalContextExample(),
+                "staticExampleTag": self.staticGlobalContextExample(),
+            ])
+            builder!.setGdprContextWith(SPGdprProcessingBasis.consent, documentId: "id", documentVersion: "1.0", documentDescription: "description")
+            // set diagnostic and logger delegate
+            builder?.setTrackerDiagnostic(true)
+            builder?.setLogLevel(.verbose)
+            builder?.setLoggerDelegate(self)
         })
         return newTracker!
+    }
+    
+    func ruleSetGlobalContextExample() -> SPGlobalContext {
+        let schemaRuleset = SPSchemaRuleset(allowedList: ["iglu:com.snowplowanalytics.*/*/jsonschema/1-*-*"],
+                                            andDeniedList: ["iglu:com.snowplowanalytics.mobile/*/jsonschema/1-*-*"])
+        return SPGlobalContext(generator: { event -> [SPSelfDescribingJson]? in
+            return [
+                SPSelfDescribingJson.init(schema: "iglu:com.snowplowanalytics.iglu/anything-a/jsonschema/1-0-0", andData: ["key": "rulesetExample"] as NSObject),
+                SPSelfDescribingJson.init(schema: "iglu:com.snowplowanalytics.iglu/anything-a/jsonschema/1-0-0", andData: ["eventName": event.schema] as NSObject)
+            ]
+        }, ruleset: schemaRuleset)
+    }
+    
+    func staticGlobalContextExample() -> SPGlobalContext {
+        return SPGlobalContext(staticContexts: [
+            SPSelfDescribingJson.init(schema: "iglu:com.snowplowanalytics.iglu/anything-a/jsonschema/1-0-0", andData: ["key": "staticExample"] as NSObject),
+        ])
     }
 
     func updateToken(_ newToken: String) {
@@ -161,4 +207,18 @@ class PageViewController:  UIPageViewController, UIPageViewControllerDelegate, U
     }
     */
 
+}
+
+extension PageViewController: SPLoggerDelegate {
+    func error(_ tag: String!, message: String!) {
+        print("[Error] \(tag!): \(message!)")
+    }
+    
+    func debug(_ tag: String!, message: String!) {
+        print("[Debug] \(tag!): \(message!)")
+    }
+    
+    func verbose(_ tag: String!, message: String!) {
+        print("[Verbose] \(tag!): \(message!)")
+    }
 }

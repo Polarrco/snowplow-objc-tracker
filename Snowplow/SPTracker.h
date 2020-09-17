@@ -2,7 +2,7 @@
 //  SPTracker.h
 //  Snowplow
 //
-//  Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Jonathan Almeida, Joshua Beemster
-//  Copyright: Copyright (c) 2013-2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2013-2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
@@ -28,6 +28,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SPDevicePlatform.h"
+#import "SPEventBase.h"
 
 void uncaughtExceptionHandler(NSException *exception);
 
@@ -49,6 +50,33 @@ void uncaughtExceptionHandler(NSException *exception);
 @class SPBackground;
 @class SPScreenState;
 @class SNOWError;
+
+@class SPGlobalContext;
+
+typedef NS_ENUM(NSInteger, SPGdprProcessingBasis) {
+    SPGdprProcessingBasisConsent = 0,
+    SPGdprProcessingBasisContract = 1,
+    SPGdprProcessingBasisLegalObligation = 2,
+    SPGdprProcessingBasisVitalInterest = 3,
+    SPGdprProcessingBasisPublicTask = 4,
+    SPGdprProcessingBasisLegitimateInterests = 5
+};
+
+typedef NS_ENUM(NSInteger, SPLogLevel) {
+    SPLogLevelOff = 0,
+    SPLogLevelError,
+    SPLogLevelDebug,
+    SPLogLevelVerbose,
+};
+
+/*!
+ @brief Logger delegate to implement in oder to receive logs from the tracker.
+*/
+@protocol SPLoggerDelegate <NSObject>
+- (void)error:(NSString *)tag message:(NSString *)message;
+- (void)debug:(NSString *)tag message:(NSString *)message;
+- (void)verbose:(NSString *)tag message:(NSString *)message;
+@end
 
 /*!
  @brief The builder for SPTracker.
@@ -98,6 +126,20 @@ void uncaughtExceptionHandler(NSException *exception);
  @param devicePlatform The SPDevicePlatform enum indicating the current platform.
  */
 - (void) setDevicePlatform:(SPDevicePlatform)devicePlatform;
+
+/*!
+ @brief Tracker builder method to set the log level desired for logging.
+
+ @param logLevel The SPLogLevel enum indicating the current log level.
+ */
+- (void) setLogLevel:(SPLogLevel)logLevel;
+
+/*!
+ @brief Tracker builder method to set the delegate for log messages tracker's generated.
+
+ @param delegate The logger delegate that received logs from the tracker.
+*/
+- (void)setLoggerDelegate:(id<SPLoggerDelegate>)delegate;
 
 /*!
  @brief Tracker builder method to set whether events will include session context
@@ -169,6 +211,32 @@ void uncaughtExceptionHandler(NSException *exception);
  */
 - (void) setInstallEvent:(BOOL)installEvent;
 
+/*!
+ @brief Tracker builder method to set whether tracker should send tracker diagnostic events.
+ 
+ @param trackerDiagnostic Whether to enable tracker diagnostic.
+ */
+- (void) setTrackerDiagnostic:(BOOL)trackerDiagnostic;
+
+/*!
+ @brief Add global context generators to be used by tracker.
+ 
+ @param globalContexts The global context generators to be used and related string tag for identification.
+ */
+- (void)setGlobalContextGenerators:(NSDictionary<NSString *, SPGlobalContext *> *)globalContexts;
+
+/*!
+ @brief Tracker builder method to set a GDPR context for the tracker
+ @param basisForProcessing Enum one of valid legal bases for processing.
+ @param documentId Document ID.
+ @param documentVersion Version of the document.
+ @param documentDescription Description of the document.
+ */
+- (void)setGdprContextWithBasis:(SPGdprProcessingBasis)basisForProcessing
+                     documentId:(NSString *)documentId
+                documentVersion:(NSString *)documentVersion
+            documentDescription:(NSString *)documentDescription;
+
 @end
 
 /*!
@@ -197,6 +265,8 @@ void uncaughtExceptionHandler(NSException *exception);
 @property (readonly, nonatomic, strong) SPScreenState * previousScreenState;
 /*! @brief Current screen view state. */
 @property (readonly, nonatomic, strong) SPScreenState * currentScreenState;
+/*! @brief List of tags associated to global contexts. */
+@property (readonly, nonatomic) NSArray<NSString *> *globalContextTags;
 
 /*!
  @brief Method that allows for builder pattern in creating the tracker.
@@ -247,6 +317,13 @@ void uncaughtExceptionHandler(NSException *exception);
 - (NSString*) getSessionUserId;
 
 /*!
+ @brief Returns the current session's id.
+
+ @return UUID of the session.
+ */
+- (NSString*) getSessionId;
+
+/*!
  @brief Returns whether lifecyle events is enabled.
 
  @return Whether background and foreground events are sent.
@@ -257,34 +334,69 @@ void uncaughtExceptionHandler(NSException *exception);
  @brief Constructs the final event payload that is sent to the emitter.
 
  @warning This function is only used for testing purposes; should never be called in production.
+ @deprecated This function will be removed in the version 2.0.
 
  @param pb The event payload without any decoration.
  @param contextArray The array of SelfDescribingJsons to add to the context JSON.
  @param eventId The event's eventId which will be used to generate the session JSON.
  @return The final complete payload ready for sending.
  */
-- (SPPayload *) getFinalPayloadWithPayload:(SPPayload *)pb andContext:(NSMutableArray *)contextArray andEventId:(NSString *)eventId;
+- (SPPayload *) getFinalPayloadWithPayload:(SPPayload *)pb andContext:(NSMutableArray *)contextArray andEventId:(NSString *)eventId __deprecated_msg("getFinalPayloadWithPayload:andContext:andEventId: is deprecated and it will be removed in the version 2.0.");
+
+/*!
+ Add new generator for global contexts associated with a string tag.
+ If the string tag has been already set the new global context is not assigned.
+ @param generator The global context generator.
+ @param tag The tag associated to the global context.
+ @return Weather the global context has been added.
+ */
+- (BOOL)addGlobalContext:(SPGlobalContext *)generator tag:(NSString *)tag;
+
+/*!
+ Remove the global context associated with the string tag.
+ If the string tag exist it returns the global context generator associated with.
+ @param tag The tag associated to the global context.
+ @return The global context associated with the tag or `nil` in case of any entry with that string tag.
+ */
+- (SPGlobalContext *)removeGlobalContext:(NSString *)tag;
+
+/*!
+ Enables GDPR context to be sent with every event.
+ @param basisForProcessing GDPR Basis for processing.
+ @param documentId ID of a GDPR basis document.
+ @param documentVersion Version of the document.
+ @param documentDescription Description of the document.
+ */
+- (void)enableGdprContextWithBasis:(SPGdprProcessingBasis)basisForProcessing
+                        documentId:(NSString *)documentId
+                   documentVersion:(NSString *)documentVersion
+               documentDescription:(NSString *)documentDescription;
+
+/// Disable GDPR context.
+- (void)disableGdprContext;
+
+#pragma mark - Events tracking methods
 
 /*!
  @brief Tracks a page view event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A page view event.
  */
-- (void) trackPageViewEvent:(SPPageView *)event;
+- (void) trackPageViewEvent:(SPPageView *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a structured event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A structured event.
  */
-- (void) trackStructuredEvent:(SPStructured *)event;
+- (void) trackStructuredEvent:(SPStructured *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks an unstructured event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event An unstructured event.
  */
-- (void) trackUnstructuredEvent:(SPUnstructured *)event;
+- (void) trackUnstructuredEvent:(SPUnstructured *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks an self-describing event.
@@ -297,65 +409,71 @@ void uncaughtExceptionHandler(NSException *exception);
 
 /*!
  @brief Tracks an screenview event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A screenview event.
  */
-- (void) trackScreenViewEvent:(SPScreenView *) event;
+- (void) trackScreenViewEvent:(SPScreenView *) event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a timing event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A timing event.
  */
-- (void) trackTimingEvent:(SPTiming *) event;
+- (void) trackTimingEvent:(SPTiming *) event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks an ecommerce event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event An ecommerce event.
  */
-- (void) trackEcommerceEvent:(SPEcommerce *)event;
+- (void) trackEcommerceEvent:(SPEcommerce *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a consent withdrawn event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A consent withdrawn event.
  */
-- (void) trackConsentWithdrawnEvent:(SPConsentWithdrawn *)event;
+- (void) trackConsentWithdrawnEvent:(SPConsentWithdrawn *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a consent granted event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A consent granted event.
  */
-- (void) trackConsentGrantedEvent:(SPConsentGranted *)event;
+- (void) trackConsentGrantedEvent:(SPConsentGranted *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a push notification event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A push notification event.
  */
-- (void) trackPushNotificationEvent:(SPPushNotification *)event;
+- (void) trackPushNotificationEvent:(SPPushNotification *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a foreground event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A foreground event.
  */
-- (void) trackForegroundEvent:(SPForeground *)event;
+- (void) trackForegroundEvent:(SPForeground *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks a background event.
-
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event A background event.
  */
-- (void) trackBackgroundEvent:(SPBackground *)event;
+- (void) trackBackgroundEvent:(SPBackground *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
 
 /*!
  @brief Tracks an error event.
- 
+ @deprecated This method will be removed in the version 2.0. Use `track:` method instead.
  @param event An error event.
  */
-- (void) trackErrorEvent:(SNOWError *)event;
+- (void) trackErrorEvent:(SNOWError *)event __deprecated_msg("It will be removed in the version 2.0. Use `track:` method instead.");
+
+/*!
+ @brief Tracks an event despite its specific type.
+ @param event The event to track
+ */
+- (void)track:(SPEvent *)event;
 
 @end

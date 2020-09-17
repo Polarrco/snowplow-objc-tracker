@@ -2,7 +2,7 @@
 //  SPSession.m
 //  Snowplow
 //
-//  Copyright (c) 2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Joshua Beemster
-//  Copyright: Copyright (c) 2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
@@ -25,17 +25,25 @@
 #import "SPUtilities.h"
 #import "SPWeakTimerTarget.h"
 #import "SPTracker.h"
-#import "SPEvent.h"
+
+#import "SPBackground.h"
+#import "SPForeground.h"
 
 #if SNOWPLOW_TARGET_IOS
 #import <UIKit/UIKit.h>
 #endif
 
+@interface SPSession ()
+
+@property (atomic) NSNumber *accessedLast;
+@property (weak) SPTracker *tracker;
+
+@end
+
 @implementation SPSession {
     NSInteger   _foregroundTimeout;
     NSInteger   _backgroundTimeout;
     NSInteger   _checkInterval;
-    NSNumber *  _accessedLast;
     BOOL        _inBackground;
     NSString *  _userId;
     NSString *  _currentSessionId;
@@ -48,7 +56,6 @@
     dispatch_queue_t _sessionQueue;
     NSInteger   _foregroundIndex;
     NSInteger   _backgroundIndex;
-    SPTracker * _tracker;
 }
 
 NSString * const kSessionSavePath = @"session.dict";
@@ -180,6 +187,10 @@ NSString * const kSessionSavePath = @"session.dict";
     return _userId;
 }
 
+- (NSString *)getSessionId {
+    return _currentSessionId;
+}
+
 - (NSInteger) getBackgroundIndex {
     return _backgroundIndex;
 }
@@ -189,7 +200,7 @@ NSString * const kSessionSavePath = @"session.dict";
 }
 
 - (SPTracker *) getTracker {
-    return _tracker;
+    return self.tracker;
 }
 
 // --- Private
@@ -198,8 +209,8 @@ NSString * const kSessionSavePath = @"session.dict";
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     BOOL result = NO;
     if ([paths count] > 0) {
-        NSString * savePath = [[paths lastObject] stringByAppendingPathComponent:kSessionSavePath];
-        NSMutableDictionary * sessionDict = [NSMutableDictionary dictionaryWithDictionary:[_sessionDict copy]];
+        NSString *savePath = [[paths lastObject] stringByAppendingPathComponent:kSessionSavePath];
+        NSMutableDictionary *sessionDict = [_sessionDict mutableCopy];
         [sessionDict removeObjectForKey:kSPSessionPreviousId];
         [sessionDict removeObjectForKey:kSPSessionStorage];
         result = [sessionDict writeToFile:savePath atomically:YES];
@@ -233,7 +244,18 @@ NSString * const kSessionSavePath = @"session.dict";
             range = strongSelf->_foregroundTimeout;
         }
         
-        if (![strongSelf isTimeInRangeWithStartTime:strongSelf->_accessedLast.longLongValue andCheckTime:checkTime.longLongValue andRange:range]) {
+        long long accessedLast = strongSelf.accessedLast.longLongValue;
+        if ([strongSelf isTimeInRangeWithStartTime:accessedLast andCheckTime:checkTime.longLongValue andRange:range]) {
+            // return because last access within the timeout
+            return;
+        }
+        @synchronized (strongSelf) {
+            if (accessedLast != strongSelf.accessedLast.longLongValue
+                && [strongSelf isTimeInRangeWithStartTime:strongSelf.accessedLast.longLongValue andCheckTime:checkTime.longLongValue andRange:range])
+            {
+                // return because last access changed but within the timeout
+                return;
+            }
             [strongSelf updateSession];
             [strongSelf updateAccessedLast];
             [strongSelf updateSessionDict];
@@ -250,7 +272,7 @@ NSString * const kSessionSavePath = @"session.dict";
 }
 
 - (void) updateAccessedLast {
-    _accessedLast = [SPUtilities getTimestamp];
+    self.accessedLast = [SPUtilities getTimestamp];
 }
 
 - (void) updateSessionDict {
@@ -279,7 +301,7 @@ NSString * const kSessionSavePath = @"session.dict";
     if (!_inBackground) {
         _backgroundIndex += 1;
         _inBackground = YES;
-        if ([_tracker getLifecycleEvents]) {
+        if ([self.tracker getLifecycleEvents]) {
             [self sendBackgroundEvent];
         }
     }
@@ -289,33 +311,33 @@ NSString * const kSessionSavePath = @"session.dict";
     if (_inBackground) {
         _foregroundIndex += 1;
         _inBackground = NO;
-        if ([_tracker getLifecycleEvents]) {
+        if ([self.tracker getLifecycleEvents]) {
             [self sendForegroundEvent];
         }
     }
 }
 
 - (void) sendBackgroundEvent {
-    if (_tracker) {
+    if (self.tracker) {
         __weak __typeof__(self) weakSelf = self;
         SPBackground * backgroundEvent = [SPBackground build:^(id<SPBackgroundBuilder> builder) {
             __typeof__(self) strongSelf = weakSelf;
             if (strongSelf == nil) return;
             [builder setIndex:[NSNumber numberWithInteger:strongSelf->_backgroundIndex]];
         }];
-        [_tracker trackBackgroundEvent:backgroundEvent];
+        [self.tracker track:backgroundEvent];
     }
 }
 
 - (void) sendForegroundEvent {
-    if (_tracker) {
+    if (self.tracker) {
         __weak __typeof__(self) weakSelf = self;
         SPForeground * foregroundEvent = [SPForeground build:^(id<SPForegroundBuilder> builder) {
             __typeof__(self) strongSelf = weakSelf;
             if (strongSelf == nil) return;
             [builder setIndex:[NSNumber numberWithInteger:strongSelf->_foregroundIndex]];
         }];
-        [_tracker trackForegroundEvent:foregroundEvent];
+        [self.tracker track:foregroundEvent];
     }
 }
 

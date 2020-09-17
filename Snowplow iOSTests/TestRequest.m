@@ -2,7 +2,7 @@
 //  TestRequest.m
 //  Snowplow
 //
-//  Copyright (c) 2013-2018 Snowplow Analytics Ltd. All rights reserved.
+//  Copyright (c) 2013-2020 Snowplow Analytics Ltd. All rights reserved.
 //
 //  This program is licensed to you under the Apache License Version 2.0,
 //  and you may not use this file except in compliance with the Apache License
@@ -16,7 +16,7 @@
 //  language governing permissions and limitations there under.
 //
 //  Authors: Jonathan Almeida, Joshua Beemster
-//  Copyright: Copyright (c) 2013-2018 Snowplow Analytics Ltd
+//  Copyright: Copyright (c) 2013-2020 Snowplow Analytics Ltd
 //  License: Apache License Version 2.0
 //
 
@@ -69,7 +69,7 @@ NSString *protocol = @"https";
     [self sendAll:tracker];
     [self emitterSleep:[tracker emitter]];
     
-    XCTAssertEqual(_successCount, 7);
+    XCTAssertEqual(_successCount, 8);
     XCTAssertEqual([tracker.emitter getDbCount], 0);
 }
 
@@ -80,7 +80,7 @@ NSString *protocol = @"https";
     SPTracker * tracker = [self getTracker:TEST_SERVER_REQUEST requestType:SPRequestGet];
     [self sendAll:tracker];
     [self emitterSleep:[tracker emitter]];
-    XCTAssertEqual(_successCount, 7);
+    XCTAssertEqual(_successCount, 8);
     XCTAssertEqual([tracker.emitter getDbCount], 0);
 }
 
@@ -91,8 +91,8 @@ NSString *protocol = @"https";
     SPTracker * tracker = [self getTracker:TEST_SERVER_REQUEST requestType:SPRequestPost];
     [self sendAll:tracker];
     [self emitterSleep:[tracker emitter]];
-    XCTAssertEqual(_failureCount, 7);
-    XCTAssertEqual([tracker.emitter getDbCount], 7);
+    XCTAssertEqual(_failureCount, 8);
+    XCTAssertEqual([tracker.emitter getDbCount], 8);
     
     // Update the URL and flush
     [[tracker emitter] setUrlEndpoint:TEST_SERVER_REQUEST];
@@ -102,7 +102,7 @@ NSString *protocol = @"https";
     
     [[tracker emitter] flushBuffer];
     [self emitterSleep:[tracker emitter]];
-    XCTAssertEqual(_successCount, 7);
+    XCTAssertEqual(_successCount, 8);
     XCTAssertEqual([tracker.emitter getDbCount], 0);
 }
 
@@ -113,7 +113,7 @@ NSString *protocol = @"https";
     [tracker setSubject:nil];
     [self sendAll:tracker];
     [self emitterSleep:[tracker emitter]];
-    XCTAssertEqual(_successCount, 7);
+    XCTAssertEqual(_successCount, 8);
     XCTAssertEqual([tracker.emitter getDbCount], 0);
 }
 
@@ -174,6 +174,7 @@ NSString *protocol = @"https";
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self trackStructuredEventWithTracker:tracker];
         [self trackUnstructuredEventWithTracker:tracker];
+        [self trackSelfDescribingJsonEventWithTracker:tracker];
         [self trackPageViewWithTracker:tracker];
         [self trackScreenViewWithTracker:tracker];
         [self trackTimingWithCategoryWithTracker:tracker];
@@ -182,6 +183,7 @@ NSString *protocol = @"https";
 }
 
 - (void) trackStructuredEventWithTracker:(SPTracker *)tracker_ {
+    NSString *uuid = [NSUUID UUID].UUIDString;
     SPStructured *event = [SPStructured build:^(id<SPStructuredBuilder> builder) {
         [builder setCategory:@"DemoCategory"];
         [builder setAction:@"DemoAction"];
@@ -190,12 +192,13 @@ NSString *protocol = @"https";
         [builder setValue:5];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
-    [tracker_ trackStructuredEvent:event];
+    [tracker_ track:event];
 }
 
 - (void) trackUnstructuredEventWithTracker:(SPTracker *)tracker_ {
+    NSString *uuid = [NSUUID UUID].UUIDString;
     NSMutableDictionary * data = [[NSMutableDictionary alloc] init];
     [data setObject:[NSNumber numberWithInt:23] forKey:@"level"];
     [data setObject:[NSNumber numberWithInt:56473] forKey:@"score"];
@@ -205,9 +208,9 @@ NSString *protocol = @"https";
         [builder setEventData:sdj];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
-    [tracker_ trackUnstructuredEvent:event];
+    [tracker_ track:event];
 }
 
 - (void) trackSelfDescribingJsonEventWithTracker:(SPTracker *)tracker_ {
@@ -220,29 +223,33 @@ NSString *protocol = @"https";
 }
 
 - (void) trackPageViewWithTracker:(SPTracker *)tracker_ {
+    NSString *uuid = [NSUUID UUID].UUIDString;
     SPPageView *event = [SPPageView build:^(id<SPPageViewBuilder> builder) {
         [builder setPageUrl:@"DemoPageUrl"];
         [builder setPageTitle:@"DemoPageTitle"];
         [builder setReferrer:@"DemoPageReferrer"];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
-    [tracker_ trackPageViewEvent:event];
+    [tracker_ track:event];
 }
 
 - (void) trackScreenViewWithTracker:(SPTracker *)tracker_ {
+    NSString *eventId = [NSUUID UUID].UUIDString;
+    NSString *screenId = [NSUUID UUID].UUIDString;
     SPScreenView *event = [SPScreenView build:^(id<SPScreenViewBuilder> builder) {
         [builder setName:@"DemoScreenName"];
-        [builder setScreenId:@"DemoScreenId"];
+        [builder setScreenId:screenId];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:eventId];
     }];
-    [tracker_ trackScreenViewEvent:event];
+    [tracker_ track:event];
 }
 
 - (void) trackTimingWithCategoryWithTracker:(SPTracker *)tracker_ {
+    NSString *uuid = [NSUUID UUID].UUIDString;
     SPTiming *event = [SPTiming build:^(id<SPTimingBuilder> builder) {
         [builder setCategory:@"DemoTimingCategory"];
         [builder setVariable:@"DemoTimingVariable"];
@@ -250,12 +257,13 @@ NSString *protocol = @"https";
         [builder setLabel:@"DemoTimingLabel"];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
-    [tracker_ trackTimingEvent:event];
+    [tracker_ track:event];
 }
 
 - (void) trackEcommerceTransactionWithTracker:(SPTracker *)tracker_ {
+    NSString *uuid = [NSUUID UUID].UUIDString;
     NSString *transactionID = @"6a8078be";
     NSMutableArray *itemArray = [NSMutableArray array];
     
@@ -269,7 +277,7 @@ NSString *protocol = @"https";
         [builder setCurrency:@"USD"];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1234657890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
     
     [itemArray addObject:item];
@@ -287,9 +295,9 @@ NSString *protocol = @"https";
         [builder setItems:itemArray];
         [builder setContexts:[self getCustomContext]];
         [builder setTimestamp:@1243567890];
-        [builder setEventId:@"an-event-id"];
+        [builder setEventId:uuid];
     }];
-    [tracker_ trackEcommerceEvent:event];
+    [tracker_ track:event];
 }
 
 - (NSMutableArray *) getCustomContext {
