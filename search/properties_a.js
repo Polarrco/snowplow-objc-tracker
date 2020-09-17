@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['urlendpoint',['urlEndpoint',['../interface_s_p_emitter.html#a8a74e26d18337a1acf81f5b6bb7ad580',1,'SPEmitter']]]
+  ['message_1618',['message',['../category_s_p_tracker_error_07_08.html#ab5c4852f4a82ccbb3b2c0df6b0130ddd',1,'SPTrackerError()']]]
 ];

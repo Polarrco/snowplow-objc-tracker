@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['urlencodedictionary_3a',['urlEncodeDictionary:',['../interface_s_p_utilities.html#ad3addae2d94dd2aa4a5f7b8c502adc97',1,'SPUtilities']]],
-  ['urlencodestring_3a',['urlEncodeString:',['../interface_s_p_utilities.html#a1629333ccb7465240de35e3113007694',1,'SPUtilities']]]
+  ['onfailurewithcount_3asuccesscount_3a_1141',['onFailureWithCount:successCount:',['../protocol_s_p_request_callback-p.html#a9c30b541eb2046737ef32eb0dbb7c34b',1,'SPRequestCallback-p']]],
+  ['onsuccesswithcount_3a_1142',['onSuccessWithCount:',['../protocol_s_p_request_callback-p.html#ac2b2f5bdea2cf4f960ef645f7792519a',1,'SPRequestCallback-p']]]
 ];
