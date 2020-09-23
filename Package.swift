@@ -10,20 +10,16 @@ let package = Package(
     products: [
         .library(
             name: "SnowplowTracker",
-            targets: ["SnowplowTracker"]),
+            targets: ["Snowplow"]),
     ],
     dependencies: [
         .package(name: "FMDB", url: "https://github.com/ccgus/fmdb", from: "2.7.6")
     ],
     targets: [
         .target(
-            name: "SnowplowTracker",
+            name: "Snowplow",
             dependencies: ["FMDB"],
             path: "Snowplow",
-            publicHeadersPath: "."),
-        .testTarget(
-            name: "Snowplow-iOSTests",
-            dependencies: ["SnowplowTracker"],
-            path: "Snowplow iOSTests")
+            publicHeadersPath: ".")
     ]
 )
