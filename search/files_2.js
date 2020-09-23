@@ -2,9 +2,9 @@ var searchData=
 [
   ['snowerror_2eh_914',['SNOWError.h',['../_s_n_o_w_error_8h.html',1,'']]],
   ['snowerror_2em_915',['SNOWError.m',['../_s_n_o_w_error_8m.html',1,'']]],
-  ['snowplow_2dbridging_2dheader_2eh_916',['Snowplow-Bridging-Header.h',['../_snowplow-_bridging-_header_8h.html',1,'']]],
-  ['snowplow_2eh_917',['Snowplow.h',['../_snowplow_8h.html',1,'']]],
-  ['snowplow_2em_918',['Snowplow.m',['../_snowplow_8m.html',1,'']]],
+  ['snowplow_2eh_916',['Snowplow.h',['../_snowplow_8h.html',1,'']]],
+  ['snowplow_2em_917',['Snowplow.m',['../_snowplow_8m.html',1,'']]],
+  ['snowplowtracker_2eh_918',['SnowplowTracker.h',['../_snowplow_tracker_8h.html',1,'']]],
   ['snowreachability_2eh_919',['SNOWReachability.h',['../_s_n_o_w_reachability_8h.html',1,'']]],
   ['snowreachability_2em_920',['SNOWReachability.m',['../_s_n_o_w_reachability_8m.html',1,'']]],
   ['spbackground_2eh_921',['SPBackground.h',['../_s_p_background_8h.html',1,'']]],
